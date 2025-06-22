@@ -6,6 +6,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import error as tg_error
 from flask import Flask
@@ -22,18 +25,17 @@ def apply_jobs():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(options=chrome_options)
+    chrome_service = Service(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
     try:
         print("🔐 Opening Naukri...")
         driver.get("https://www.naukri.com/")
-        print("⏳ Waiting 10 seconds for Naukri to load...")
-        time.sleep(10)
-
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-wait = WebDriverWait(driver, 15)
-search_box = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Skills, Designations, Companies')]")))
+        print("⏳ Waiting for search box...")
+        wait = WebDriverWait(driver, 15)
+        search_box = wait.until(EC.presence_of_element_located(
+            (By.XPATH, "//input[contains(@placeholder, 'Skills, Designations, Companies')]")
+        ))
         search_box.send_keys("Oracle Techno-Functional Consultant")
         search_box.send_keys(Keys.RETURN)
         time.sleep(5)
