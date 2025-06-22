@@ -29,7 +29,11 @@ def apply_jobs():
         print("⏳ Waiting 10 seconds for Naukri to load...")
         time.sleep(10)
 
-        search_box = driver.find_element(By.ID, "qsb-keyword-sugg")
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+wait = WebDriverWait(driver, 15)
+search_box = wait.until(EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Skills, Designations, Companies')]")))
         search_box.send_keys("Oracle Techno-Functional Consultant")
         search_box.send_keys(Keys.RETURN)
         time.sleep(5)
