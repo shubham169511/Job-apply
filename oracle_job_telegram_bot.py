@@ -1,9 +1,11 @@
 
 import os
 import time
+import traceback
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import error as tg_error
 from flask import Flask
@@ -15,10 +17,17 @@ AUTHORIZED_USER_ID = int(os.getenv("AUTHORIZED_USER_ID", "0"))
 
 # === Job Application Logic ===
 def apply_jobs():
-    driver = webdriver.Chrome()
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    driver = webdriver.Chrome(options=chrome_options)
     try:
+        print("🔐 Opening Naukri...")
         driver.get("https://www.naukri.com/")
-        input("Log in to Naukri manually, then press Enter here...")
+        print("⏳ Waiting 10 seconds for Naukri to load...")
+        time.sleep(10)
 
         search_box = driver.find_element(By.ID, "qsb-keyword-sugg")
         search_box.send_keys("Oracle Techno-Functional Consultant")
@@ -36,12 +45,15 @@ def apply_jobs():
                 time.sleep(2)
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
+                print("✅ Applied to a Naukri job.")
             except Exception as e:
-                print(f"Naukri Error: {e}")
+                print(f"❌ Naukri Job Error: {e}")
                 driver.switch_to.window(driver.window_handles[0])
 
+        print("🔐 Opening LinkedIn...")
         driver.get("https://www.linkedin.com/jobs")
-        input("Log in to LinkedIn manually, then press Enter here...")
+        print("⏳ Waiting 10 seconds for LinkedIn to load...")
+        time.sleep(10)
 
         search_box = driver.find_element(By.XPATH, "//input[contains(@class,'jobs-search-box__text-input')]")
         search_box.send_keys("Oracle Techno-Functional Consultant")
@@ -56,10 +68,13 @@ def apply_jobs():
                 easy_apply = driver.find_element(By.XPATH, "//button[contains(text(), 'Easy Apply')]")
                 easy_apply.click()
                 time.sleep(2)
+                print("✅ Applied to a LinkedIn job.")
             except Exception as e:
-                print(f"LinkedIn Error: {e}")
+                print(f"❌ LinkedIn Job Error: {e}")
+
     finally:
         driver.quit()
+        print("🛑 Browser closed.")
 
 # === Telegram Handlers ===
 def start(update, context):
@@ -72,8 +87,14 @@ def handle_message(update, context):
         return
     if "apply" in update.message.text.lower():
         update.message.reply_text("✅ Starting job application process...")
-        apply_jobs()
-        update.message.reply_text("🎯 Jobs applied.")
+        try:
+            start_time = time.time()
+            apply_jobs()
+            duration = round(time.time() - start_time, 1)
+            update.message.reply_text(f"🎯 Jobs applied in {duration} seconds.")
+        except Exception as e:
+            print("❌ Bot Error:", traceback.format_exc())
+            update.message.reply_text(f"❌ Bot crashed:\n{e}")
     else:
         update.message.reply_text("Send 'Apply now' to apply.")
 
