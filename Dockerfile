@@ -1,18 +1,21 @@
 
-# Use official Python 3.10 image
 FROM python:3.10-slim
 
-# Set working directory
+RUN apt-get update && apt-get install -y \
+    chromium \
+    chromium-driver \
+    curl \
+    unzip \
+    gnupg \
+    libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1 libxss1 \
+    libappindicator3-1 libasound2 xdg-utils \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+
 WORKDIR /app
-
-# Copy all files into container
 COPY . .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port (not mandatory for this bot but good practice)
-EXPOSE 8000
-
-# Run the Telegram bot script
 CMD ["python", "oracle_job_telegram_bot.py"]
