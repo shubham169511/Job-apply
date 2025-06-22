@@ -84,3 +84,28 @@ def main():
 
 if __name__ == '__main__':
     main()
+# Add at the top with other imports
+from flask import Flask
+import threading
+
+# Your existing main() stays as is
+def main():
+    updater = Updater(TELEGRAM_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    updater.start_polling()
+    updater.idle()
+
+# Dummy web server so Render thinks this is a "web service"
+app = Flask(__name__)
+
+@app.route("/")
+def status():
+    return "✅ Telegram bot is running"
+
+if __name__ == '__main__':
+    # Run Flask in a background thread
+    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8000)).start()
+    # Start the bot
+    main()
