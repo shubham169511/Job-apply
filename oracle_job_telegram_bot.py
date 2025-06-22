@@ -98,14 +98,30 @@ def main():
     updater.idle()
 
 # Dummy web server so Render thinks this is a "web service"
+from flask import Flask
+import threading
+
+# Your existing bot logic remains above
+# --------------------------
+# Add this at the very bottom:
+
 app = Flask(__name__)
 
-@app.route("/")
-def status():
-    return "✅ Telegram bot is running"
+@app.route('/')
+def index():
+    return "✅ Telegram bot is running via Flask."
+
+def run_flask():
+    app.run(host="0.0.0.0", port=8000)
+
+def run_telegram_bot():
+    updater = Updater(TELEGRAM_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == '__main__':
-    # Run Flask in a background thread
-    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8000)).start()
-    # Start the bot
-    main()
+    threading.Thread(target=run_flask).start()  # Flask runs on port 8000
+    run_telegram_bot()                          # Start Telegram bot
